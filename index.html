@@ -1,0 +1,301 @@
+<html>
+	<head>
+		<link rel="stylesheet" href="Styles.css">
+	</head>
+
+	<!-- The main program -->
+	<script type="text/javascript" src="IndexController.js"></script>
+
+	<head>
+		<title>Booscar</title>
+	</head>
+
+	<body style="background-color:lightgreen; font-family:Lucida Console, monospace;">
+
+		<div id="query">
+			<div id="info_modal" class="non-modal" style="display: none">
+				<div class="modal-content" style="height: 50%; width: 40%; text-align: center; border-radius: 30px; background-color: white;">
+					<p>This is a database platform (pronounced BOO, as in the ghost noise, SCAR, as in battle scar) was built by <a href="https://github.com/robertsd1072/A_Database_Platform">David Roberts</a>.</p>
+					<p>The front-end was built with HTML, CSS, and Javascript. The javascript makes calls to a Node JS API, which executes a C executable on a remote server.</p>
+					<p>The motivation behind this project was to increase my understand of and experience with C. The goal of this project is to create my own version of SQL with my own ideas and my own code, and using SQL Server as a benchmark. There is more information on the github above.</p>
+					<p>Feel free to mess around with the preloaded tables, or create your own from a CSV file.</p>
+					<p>Please specify a keyword, or a unique identifier, which you will remember. This will be used to link any tables you create to you, and other than the preloaded tables, you will only be able to query and edit the tables you create.</p>
+					<label for="lname">Keyword:</label>&nbsp;&nbsp;<input type="text" id="keyword" name="keyword">
+					<br><br>
+					<button class="my_btn_style" onClick='showHideInfo()'>Submit and Close</button>
+				</div>
+			</div>
+
+			<div id="create_modal" class="non-modal" style="display: none">
+				<div class="modal-content" style="height: 60%; width: 40%; text-align: center; border-radius: 30px; background-color: white;">
+					<p>This database currently supports four datatypes: strings, integers, real numbers (including decimals), and dates (time not included).</p>
+					<p>When uploading a CSV, ensure that the first row includes both column names and datatypes. For example:</p>
+					<p>COLUMN_ONE:char(63),COLUMN_TWO:integer,COLUMN_THREE:real,COLUMN_FOUR:date</p>
+					<p>In the example, char(63) means the maximum length of the string is 63 characters.</p>
+					<p>Ensure that each row is on a new line, remove any commas from string values, and ensure that any special characters are escaped. For example: "Hello this is&emsp;an ""Example""".</p>
+					<form ref='uploadForm' 
+				      id='uploadForm' 
+				      action='http://localhost:3000/upload_csv/'
+				      method='post'
+				      encType="multipart/form-data">
+				        <input type="file" accept=".csv" name="sampleFile"></input>
+				        <h2><button class="my_btn_style" type='submit'>Upload the .CSV file</button></h2>
+				    </form>
+				    <input type="text" id="table_name"> <- Name of table</input><br><br>
+				    <input type="text" id="num_rows"> <- Number of rows</input>
+				    <h2><button class="my_btn_style" onclick="createTable();showHideCreate();">Create Table</button></h2>
+					<button class="my_btn_style" onClick='showHideCreate()'>Close</button>
+				</div>
+			</div>
+
+			<div id="error_modal" class="non-modal" style="display: none">
+				<div class="modal-content" style="height: 150px; width: 450px; text-align: center; border-radius: 30px; background-color: white;">
+					<h2>There was an error connecting to the server, please try again later.</h2>
+					<button class="my_btn_style" onClick='showHideError()'>Close</button>
+				</div>
+			</div>
+
+
+			<div class="content" style="height: 3%; width: 96%; padding: 1%; resize: none; position: absolute; left: 1%; top: 1%; text-align: center;">  
+				<span style="float:left;">
+					<div class="inner"><button class="my_btn_style" onClick="window.open('https://github.com/robertsd1072/A_Database_Platform', '_blank');">Github</button></div>
+					<div class="inner"><button class="my_btn_style" onClick="window.open('https://www.linkedin.com/in/david-roberts-pitt', '_blank');">Hire Me</button></div>
+					<div class="inner"><button class="my_btn_style" id="mode" onClick='switchMode()'>Dark Mode</button></div>
+				</span>
+				<b style="font-size: 28px;">BOOSCAR</b>
+				<span style="float:right;">
+					<div class="inner"><button class="my_btn_style" onClick='showHideDoc()'>Documentation</button></div>
+					<div class="inner"><button class="my_btn_style" id="create_csv_btn" style="display:none" onClick='showHideCreate()'>Create from CSV</button></div>
+				</span>
+			</div>
+
+			<div class="outer" style="width: 100%">
+				<div class="inner">
+					<div class="content" id="outline_div" style="height: 86%; width: 25%; padding: 1%; resize: none; position: absolute; left: 1%; top: 9%; text-align: left;font-size: 20px;">
+						<button class="my_btn_style" onClick='getTables()'>Update Tables List</button>
+						<button class="my_btn_style" onClick='sendCommand()'>Execute Query</button>
+						<hr>
+						<ul id="tables_list" style="text-align: left;"></ul>
+					</div>
+					<div class="outer" id="query_and_results_div" style="width: 75%">
+						<div class="inner">
+							<textarea id="query_area" name="query_area" class="content" placeholder="Write a SQL query..." style="height: 50%; width: 70%; padding: 1%; resize: none; position: absolute; left: 29%; top: 9%; border: white"></textarea>
+							<div style="height: 3%; width: 68%; padding: 1%; resize: none; position: absolute; left: 29%; top: 58%">
+								<span style="float:left"><b style="font-size: 20px;" id="keyword_display"></b></span>
+								<span style="float:right"><div class="loader" id="loader" style="display: none;"></div></span>
+								<span style="float:right"><b style="font-size: 20px;" id="exec_time_display"></b></span>
+							</div>
+							<div id="div_table" class="content" style="height: 34.2%; width: 69.6%; padding: 0.2%; resize: none; position: absolute; left: 29%; top: 64%">
+								<table id="result_table" class="content">
+									<tr id="col_names" style="background-color: lightgreen;">
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="doc" style="display: none;">
+			<h1>Booscar Documentation&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="my_btn_style" onClick='showHideDoc()'>Back</button></h1>
+			<ol class="toc-list" role="list">
+				<li><a href="#Introduction"><span>Introduction</span></a></li>
+				<li>
+					<a href="#Notable_Changes"><span>Notable Changes</span></a>
+					<ol role="list">
+						<li><a href="#Notable_Changes_Security"><span>Security</span></a></li>
+						<li><a href="#Notable_Changes_Query_Creation"><span>Query Creation</span></a></li>
+						<li><a href="#Notable_Changes_Aggregate_Functions"><span>Aggregate Functions</span></a></li>
+					</ol>
+				</li>
+				<li>
+					<a href="#Notable_Exclusions"><span>Notable Exclusions</span></a>
+					<ol role="list">
+						<li><a href="#Notable_Exclusions_In_Where_Clauses"><span>In Where Clauses</span></a></li>
+						<li><a href="#Notable_Exclusions_Non_Aggregate_Functions"><span>Non-aggregate Functions</span></a></li>
+						<li><a href="#Notable_Exclusions_Select_Top"><span>Select TOP</span></a></li>
+						<li><a href="#Notable_Exclusions_Joining"><span>Joining</span></a></li>
+						<li><a href="#Notable_Exclusions_Union"><span>UNION</span></a></li>
+						<li><a href="#Notable_Exclusions_Exists"><span>EXISTS</span></a></li>
+						<li><a href="#Notable_Exclusions_Any_All"><span>ANY, ALL</span></a></li>
+						<li><a href="#Notable_Exclusions_Stored_Procedures"><span>Stored Procedures</span></a></li>
+					</ol>
+				</li>
+				<li>
+					<a href="#New_Features"><span>New Features</span></a>
+					<ol role="list">
+						<li><a href="#New_Features_Except"><span>EXCEPT Clauses</span></a></li>
+						<li><a href="#New_Features_Blanket_Column_Names"><span>Blanket Column Names</span></a></li>
+					</ol>
+				</li>
+			</ol>
+
+			<br>
+			<div id=Introduction>
+				<h2>Introduction</h2>
+				<p>Booscar is a database platform based on SQL (Standard Query Language), and as a result, follows most SQL conventions. This document will not include basic information about SQL; that can be found at <a href="https://www.w3schools.com/sql">https://www.w3schools.com/sql</a>. Rather, this document will include any notable changes, exclusions, and new features that will help in the creation of more complex queries.</p>
+			</div>
+			<br>
+			<div id="Notable_Changes">
+				<h2>Notable Changes</h2>
+				<div id="Notable_Changes_Security">
+					<h3>Security</h3>
+					<p>Very basic security measures are implemented by having the user enter a keyword. This occurs upon website startup. The keyword will be used as a username, claiming any tables the user creates as theirs. There are two scenarios in using this keyword.</p>
+					<ol class="toc-list" role="list">
+						<li>The user does not provide a keyword.</li>
+						<br><p>The user is only permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is also not permitted to upload CSV files to create new tables.</p><br>
+						<br><li>The user does provide a keyword.</li>
+						<br><p>The user is permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is permitted to upload CSV files to create new tables. Inserts, updates, and deletes are permitted on any table the user creates.</p><br>
+					</ol>
+				</div>
+				<div id="Notable_Changes_Query_Creation">
+					<h3>Query Creation</h3>
+					<ol class="toc-list" role="list">
+						<li>All selected columns are required to have a unique names.</li>
+						<br><p>Selected columns must be given new names as necessary. Booscar will throw an error. See the new feature, Blanket Column Names, for a quick way to giver every selected column a new and unique name.</p><br>
+						<br><li>All views, or sub selects, are required to have a unique name.</li>
+						<br><p>In the following two examples, the word "TBL" is needed to name each of the views, or sub selects. These names must be unique. Otherwise, Booscar will throw an error.</p>
+						<pre>
+with <u>TBL</u> as
+(
+	select * from table
+)
+select * from TBL;</pre>
+						<pre>
+select *
+from
+(
+	select * from table
+) <u>TBL</u>;</pre>
+					</ol>
+				</div>
+				<div id="Notable_Changes_Aggregate_Functions">
+					<h3>Aggregate Functions</h3>
+					<p>Only the following aggregate functions are supported by Booscar (this may change in the future).</p>
+					<ol class="toc-list" role="list">
+						<li>AVG(a valid integer or floating point column)</li>
+						<li>COUNT(a valid column or *)</li>
+						<li>FIRST(a valid date point column)</li>
+						<li>LAST(a valid date column)</li>
+						<li>MIN(a valid integer or floating point column)</li>
+						<li>MAX(a valid integer or floating point column)</li>
+						<li>MEDIAN(a valid integer or floating point column)</li>
+						<li>SUM(a valid integer or floating point column)</li>
+					</ol>
+				</div>
+			</div>
+			<br>
+			<div id="Notable_Exclusions">
+				<h2>Notable Exclusions</h2>
+				<div id="Notable_Exclusions_In_Where_Clauses">
+					<h3>In Where Clauses</h3>
+					<p>The following where clause features are not supported by Booscar (this may change in the future).</p>
+					<ol class="toc-list" role="list">
+						<li>BETWEEN</li>
+						<li>LIKE</li>
+						<li>% wildcard</li>
+						<li>IN</li>
+						<li>NOT</li>
+					</ol>
+				</div>
+				<div id="Notable_Exclusions_Non_Aggregate_Functions">
+					<h3>Non-aggregate Functions</h3>
+					<p>All non-aggregate functions (for example CONVERT()) are not supported by Booscar (this may change in the future).</p>
+				</div>
+				<div id="Notable_Exclusions_Select_Top">
+					<h3>Select TOP</h3>
+					<p>The following clauses, which are used to select a limited number of rows, are not supported by Booscar (this may change in the future).</p>
+					<ol class="toc-list" role="list">
+						<li>TOP</li>
+						<li>LIMIT</li>
+						<li>FETCH FIRST</li>
+						<li>ROWNUM</li>
+					</ol>
+				</div>
+				<div id="Notable_Exclusions_Joining">
+					<h3>Joining</h3>
+					<p>Any joined tables must be explicitly declared with JOIN and ON. The following query is not supported by Booscar (this may change in the future).</p>
+					<pre>
+select *
+from table1, table2
+where column1 = 'VALUE';</pre>
+				</div>
+				<div id="Notable_Exclusions_Union">
+					<h3>UNION</h3>
+					<p>Unions (see below for an example) are not supported by Booscar (this may change in the future).</p>
+					<pre>
+select * from table1
+union
+select * from table2;</pre>
+				</div>
+				<div id="Notable_Exclusions_Exists">
+					<h3>EXISTS</h3>
+					<p>Exists clauses are not supported by Booscar (this may change in the future).</p>
+				</div>
+				<div id="Notable_Exclusions_Any_All">
+					<h3>ANY, ALL</h3>
+					<p>Any and All clauses are not supported by Booscar (this may change in the future).</p>
+				</div>
+				<div id="Notable_Exclusions_Stored_Procedures">
+					<h3>Stored Procedures</h3>
+					<p>Stored procedures are not supported by Booscar (this may change in the future).</p>
+				</div>
+			</div>
+			<br>
+			<div id="New_Features">
+				<h2>New Features</h2>
+				<div id="New_Features_Except">
+					<h3>EXCEPT Clauses</h3>
+					<p>This feature provides a way for the user to select all columns from a table EXCEPT columns contianed in a declared list. A query containing an EXCEPT clause must also include "select *". See the following example.</p>
+					<pre>
+select * EXCEPT column96, column54
+from table;</pre>
+					<pre>
+select * EXCEPT tbl1.column96, tbl2.column54
+from table1 tbl1
+join table2 tbl2
+on tbl1.column1 = tbl2.column1;</pre>
+					<pre>
+select tbl1.* EXCEPT tbl1.column96
+from table1 tbl1
+join table2 tbl2
+on tbl1.column1 = tbl2.column1;</pre>
+				</div>
+				<div id="New_Features_Blanket_Column_Names">
+					<h3>Blanket Column Names</h3>
+					<p>Since all selected columns must have a unique name, this feature provides a quick way for the user to give all selected columns a unique name. This may be useful when selecting a lot of columns, selecting the same column twice, or selecting different columns from different tables which have the same name.</p>
+					<p>There are three aspects to this feature:</p>
+					<ol class="toc-list" role="list">
+						<li>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is used as a concatenation operator. The original column name is kept, and whatever comes after the plus is concatenated onto the end. This operation cannot be used at the end of the clause in the same way.</li>
+						<li>#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is replaced with a number corresponding to the index of the column in the select statement.</li>
+						<li>@&nbsp;&nbsp;&nbsp;is replaced by one or more letters corresponding to the index of the column in the select statement, starting at A and continuing toward ZZZZZ. For example, a column at index 28 will have the letters AB.</li>
+					</ol>
+					<p>The user can declare blanket column names in the same way as the following example. <u>The "as" and the double quotes must be used to fully capture the declaration.</u></p>
+					<pre>
+select * as "COL#"
+from table;</pre>
+					<p>The example above will produce the following result.</p>
+					<pre>
+COL1 | COL2 | COL3 | COL4 | COL5 | COL6 ...</pre>
+					<pre>
+select * as "COL_1_@"
+from table;
+
+COL_1_A | COL_1_B | COL_1_C | COL_1_D | COL_1_E | COL_1_F ...</pre>
+					<pre>
+select * as "+_COL_1_@"
+from table;
+
+column_COL_1_A | column_COL_1_B | column_COL_1_C | column_COL_1_D ...</pre>
+					<pre>
+select * as "+_#_@"
+from table;
+
+column_1_A | column_2_B | column_3_C | column_4_D ...</pre>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>
