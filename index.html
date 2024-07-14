@@ -1,10 +1,806 @@
 <html>
-	<head>
-		<link rel="stylesheet" href="Styles.css">
-	</head>
+	<style>
+		.outer
+		{
+		  /*text-align: center;*/
+		}
+		.inner
+		{
+		  display: inline-block;
+		}
+
+		.my_btn_style
+		{
+		  font-size: 18px;
+		}
+
+		.results
+		{
+		  border: 1px solid black;
+		  height: 60%; 
+		  width: 80%; 
+		  margin: 0 auto;
+		  overflow-y: auto;
+		}
+
+		li
+		{
+		  padding: 5px;
+		}
+
+		textarea
+		{
+		  font-size: 16px;
+		}
+
+		td
+		{
+		  padding: 5px;
+		}
+
+		th
+		{
+		  padding: 8px;
+		  font-size: 18px;
+		}
+
+		tr 
+		{
+		  border-bottom: 1px solid black;
+		}
+
+		tr:hover 
+		{
+		  background-color: gray;
+		}
+
+		 /* Remove default bullets */
+		ul, #tables_list {
+		  list-style-type: none;
+		}
+
+		/* Remove margins and padding from the parent ul */
+		#tables_list {
+		  margin: 0;
+		  padding: 0;
+		}
+
+		/* Style the caret/arrow */
+		.caret {
+		  cursor: pointer;
+		  user-select: none; /* Prevent text selection */
+		}
+
+		/* Create the caret/arrow with a unicode, and style it */
+		.caret::before {
+		  content: "\25B6";
+		  color: gray;
+		  display: inline-block;
+		  margin-right: 6px;
+		}
+
+		/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+		.caret-down::before {
+		  transform: rotate(90deg);
+		}
+
+		/* Hide the nested list */
+		.nested {
+		  display: none;
+		}
+
+		/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+		.active {
+		  display: block;
+		}
+
+		.content 
+		{
+		  overflow: auto;
+		  border-radius: 10px;
+		  background-color: white;
+		  margin: 0 auto;
+		  overflow-y: auto;
+		}
+
+		.non-modal 
+		{
+		  display: flex; /* Hidden by default */
+		  position: fixed; /* Stay in place */
+		  z-index: 1; /* Sit on top */
+		  height: 0px;
+		  left: 0;
+		  top: 0;
+		  width: 100%; /* Full width */
+		  height: 100%; /* Full height */
+		  overflow-y: auto; /* Enable scroll if needed */
+		  background-color: rgb(0,0,0); /* Fallback color */
+		  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+		}
+
+		.modal-content
+		{
+		  margin: 15% auto; /* 15% from the top and centered */
+		  padding: 20px;
+		  border: 1px solid #888;
+		  width: 80%; /* Could be more or less, depending on screen size */
+		}
+
+		pre
+		{
+		  background-color: gray;
+		  border-radius: 5px;
+		}
+
+		.loader {
+		  border: 5px solid white; /* Light grey */
+		  border-top: 5px solid gray; /* Blue */
+		  border-radius: 50%;
+		  width: 12px;
+		  height: 12px;
+		  animation: spin 1.5s linear infinite;
+		}
+
+		@keyframes spin {
+		  0% { transform: rotate(0deg); }
+		  100% { transform: rotate(360deg); }
+		}
+	</style>
 
 	<!-- The main program -->
-	<script type="text/javascript" src="IndexController.js"></script>
+	<script>
+		var num_rows = 0;
+		var num_cols = 0;
+		var cur_num_rows = 0;
+
+		var lightMode = true;
+		var info = false;
+		var create = false;
+		var error = false;
+		var doc = false;
+		var howWorks = false;
+		var keyword;
+
+		window.onload = function() 
+		{
+			showHideInfo();
+		};
+
+		function fillTable(data, start_time)
+		{
+			//console.log(data);
+			//document.getElementById("result").innerText = data;
+			var data_arr = data.split("\n");
+
+			var result_table = document.getElementById("result_table");
+
+			// START Clear table
+				while (result_table.firstChild)
+				{
+					result_table.firstChild.remove();
+				}
+
+				var new_col_names = document.createElement('tr');
+				new_col_names.id = "col_names";
+				if (lightMode)
+					new_col_names.style.backgroundColor = "lightgreen";
+				else
+					new_col_names.style.backgroundColor = "#262626";
+
+				result_table.append(new_col_names);
+			// END Clear table
+
+
+			var starting_index = 0;
+			//console.log("data_arr[0] = "+data_arr[0]);
+			if (!isNaN(data_arr[0]))
+				starting_index = 1;
+
+
+			for (var i=starting_index; i<data_arr.length; i++)
+			{
+				var row;
+				var row_arr = data_arr[i].split(",");
+
+				if (i == starting_index)
+					row = document.getElementById("col_names");
+				else
+				{
+					row = document.createElement('tr');
+					//row.id = "row_"+i;
+				}
+
+
+				if (starting_index == 1)
+				{
+					var row_num_cell;
+					if (i == starting_index)
+						row_num_cell = document.createElement('th');
+					else
+					{
+						row_num_cell = document.createElement('td');
+						row_num_cell.innerHTML = i-1;
+					}
+					
+					//row_num_cell.id = "cell_"+i+"_0";
+					row.append(row_num_cell);
+				}
+
+
+				for (var j=0; j<row_arr.length; j++)
+				{
+					var cell;
+
+					if (i == starting_index)
+						cell = document.createElement('th');
+					else
+						cell = document.createElement('td');
+
+					cell.innerHTML = row_arr[j];
+					//cell.id = "cell_"+i+"_"+(j+1);
+					row.append(cell);
+				}
+
+				if (i != starting_index)
+					result_table.append(row);
+			}
+
+
+			if (!isNaN(data_arr[0]))
+				num_rows = data_arr[0];
+			else
+				num_rows = 0;
+
+
+			var end_time = performance.now();
+
+			if (start_time != null)
+			{
+				var exec_time = end_time - start_time;
+
+				if (Number(num_rows) <= 200)
+				{
+					if (exec_time > 1000)
+					{
+						exec_time = exec_time / 1000.0;
+						document.getElementById("exec_time_display").innerHTML = "Execution Time (sec): " + exec_time + " | "+num_rows+" rows";
+					}
+					else
+						document.getElementById("exec_time_display").innerHTML = "Execution Time (ms): " + exec_time + " | "+num_rows+" rows";
+				}
+				else
+				{
+					if (exec_time > 1000)
+					{
+						exec_time = exec_time / 1000.0;
+						document.getElementById("exec_time_display").innerHTML = "Execution Time (sec): " + exec_time + " | 200 rows displayed (" + num_rows + " total) |&nbsp;";
+					}
+					else
+						document.getElementById("exec_time_display").innerHTML = "Execution Time (ms): " + exec_time + " | 200 rows displayed (" + num_rows + " total) |&nbsp;";
+
+					document.getElementById("load_all_rows").style.display = "block";
+				}
+			}
+
+			document.getElementById("result_table").style.display = "block";
+			document.getElementById("loader").style.display = "none";
+			document.getElementById("exec_btn_div").style.display = "block";
+			document.getElementById("exec_filler_div").style.display = "none";
+		}
+
+		function sendCommand()
+		{
+			if (document.getElementById("query_area").value == "_get_tables" || document.getElementById("query_area").value == "_get_all")
+			{
+				document.getElementById("query_area").value = " "+document.getElementById("query_area").value;
+			}
+
+			if (num_rows != 0)
+			{
+				document.getElementById("result_table").style.display = "none";
+			}
+
+			document.getElementById("load_all_rows").style.display = "none";
+			document.getElementById("exec_btn_div").style.display = "none";
+			document.getElementById("exec_filler_div").style.display = "block";
+			document.getElementById("exec_time_display").innerHTML = "";
+			document.getElementById("loader").style.display = "block";
+
+			var start_time = performance.now();
+
+			var cmd = document.getElementById("query_area").value;
+			cmd = cmd.replaceAll("\n", ' ');
+			cmd = cmd.replaceAll(";", '');
+			cmd = cmd.replaceAll("+", "%2B");
+
+			if (cmd.includes("_get_all") || cmd.includes("_get_tables"))
+				return;
+
+			let url = 'http://booscar.net:3000/green_boi/cmd/?keyword="'+keyword+'"&statement="'+cmd+'"';
+			console.log(url);
+			fetch(url)
+				.then(res => res.json())
+				.then(data => 
+				{
+					if (data == "" || data == "ERROR SERVER CONTACT\n")
+						showHideError();
+					else
+						fillTable(data, start_time);
+				})
+			.catch(err => showHideError());
+		}
+
+		function addRowsToTable(data, start_time)
+		{
+			var data_arr = data.split("\n");
+
+			var result_table = document.getElementById("result_table");
+
+			for (var i=0; i<data_arr.length; i++)
+			{
+				var row_arr = data_arr[i].split(",");
+
+				var row = result_table.insertRow(cur_num_rows+i);//document.createElement('tr');
+				//row.id = "row_"+(cur_num_rows+i);
+
+				var row_num_cell = row.insertCell(0);//document.createElement('td');
+				row_num_cell.innerHTML = (cur_num_rows+i)+1;
+				
+				//row_num_cell.id = "cell_"+(cur_num_rows+i)+"_0";
+				//row.append(row_num_cell);
+
+				for (var j=0; j<row_arr.length; j++)
+				{
+					var cell = row.insertCell(j+1);//document.createElement('td');
+
+					cell.innerHTML = row_arr[j];
+					//cell.id = "cell_"+(cur_num_rows+i)+"_"+(j+1);
+					//row.append(cell);
+				}
+
+				//result_table.append(row);
+			}
+
+
+			cur_num_rows += 5000;
+			console.log("cur_num_rows = "+cur_num_rows);
+
+
+			if (cur_num_rows < num_rows)
+			{
+				let url = 'http://booscar.net:3000/green_boi/get_all/?keyword="'+keyword+'"';
+				//console.log(url);
+				fetch(url)
+					.then(res => res.json())
+					.then(data => 
+					{
+						if (data == "")
+							showHideError();
+						else
+							addRowsToTable(data, start_time);
+					})
+				.catch(err => showHideError());
+			}
+			else
+			{
+				var end_time = performance.now();
+
+				var exec_time = end_time - start_time;
+
+				if (exec_time > 1000)
+				{
+					exec_time = exec_time / 1000.0;
+					document.getElementById("exec_time_display").innerHTML = "Execution Time (sec): " + exec_time + " | "+num_rows+" rows";
+				}
+				else
+					document.getElementById("exec_time_display").innerHTML = "Execution Time (ms): " + exec_time + " | "+num_rows+" rows";
+
+				document.getElementById("result_table").style.display = "block";
+				document.getElementById("loader").style.display = "none";
+				document.getElementById("exec_btn_div").style.display = "block";
+				document.getElementById("exec_filler_div").style.display = "none";
+			}
+		}
+
+		function getAllRows()
+		{
+			if (confirm("This may take a very long time to load (thanks javascript), continue?"))
+			{
+				document.getElementById("load_all_rows").style.display = "none";
+				document.getElementById("exec_btn_div").style.display = "none";
+				document.getElementById("exec_filler_div").style.display = "block";
+				document.getElementById("exec_time_display").innerHTML = "";
+				document.getElementById("loader").style.display = "block";
+
+				cur_num_rows = 200;
+
+				var start_time = performance.now();
+
+				let url = 'http://booscar.net:3000/green_boi/get_all/?keyword="'+keyword+'"';
+				//console.log(url);
+				fetch(url)
+					.then(res => res.json())
+					.then(data => 
+					{
+						if (data == "")
+							showHideError();
+						else
+							addRowsToTable(data, start_time);
+					})
+				.catch(err => showHideError());
+			}
+		}
+
+		function getTables()
+		{
+			document.getElementById("exec_btn_div").style.display = "none";
+			document.getElementById("exec_filler_div").style.display = "block";
+			document.getElementById("exec_time_display").innerHTML = "";
+			document.getElementById("loader").style.display = "block";
+
+			let url = 'http://booscar.net:3000/green_boi/get_tables/?keyword="'+keyword+'"';
+			console.log(url);
+			fetch(url)
+				.then(res => res.json())
+				.then(data => 
+				{
+					if (data == "" || data == "ERROR SERVER CONTACT")
+						showHideError();
+					else
+					{
+						var tables_list = document.getElementById("tables_list");
+
+						while (tables_list.firstChild) 
+						{
+					        tables_list.removeChild(tables_list.firstChild);
+					    }
+
+						var tables_arr = data.split(";");
+						for (var i=0; i<tables_arr.length; i++)
+						{
+							var table = document.createElement("li");
+							
+							var name = document.createElement("span");
+							name.className = "caret";
+
+							table.append(name);
+
+							var bold = document.createElement("b");
+							bold.innerHTML = tables_arr[i].split(":")[0];
+							table.append(bold);
+
+							var nested = document.createElement("ul");
+							nested.className = "nested";
+
+							var cols_arr = tables_arr[i].split(":")[1].split(",");
+
+							for (var j=0; j<cols_arr.length; j++)
+							{
+								var col = document.createElement("li");
+								col.innerHTML = cols_arr[j].replace("|"," | ");
+								col.style.fontSize = "16px";
+								col.style.color = "#3c3c3c";
+
+								nested.append(col);
+							}
+
+							table.append(nested);
+
+							tables_list.append(table);
+						}
+
+						var toggler = document.getElementsByClassName("caret");
+
+						for (var i=0; i<toggler.length; i++) 
+						{
+						  	console.log(toggler[i].innerHTML);
+						  	toggler[i].addEventListener("click", function() 
+						  	{
+						    	this.parentElement.querySelector(".nested").classList.toggle("active");
+						    	this.classList.toggle("caret-down");
+						  	});
+						}
+					}
+				})
+			.catch(err => showHideError());
+
+			document.getElementById("result_table").style.display = "block";
+			document.getElementById("loader").style.display = "none";
+			document.getElementById("exec_btn_div").style.display = "block";
+			document.getElementById("exec_filler_div").style.display = "none";
+		}
+
+		/*function createTable()
+		{
+			document.getElementById("load_all_rows").style.display = "none";
+			document.getElementById("loader").style.display = "block";
+			document.getElementById("exec_btn_div").style.display = "none";
+			document.getElementById("exec_filler_div").style.display = "block";
+			document.getElementById("exec_time_display").innerHTML = "";
+
+			var num_rows = document.getElementById("num_rows").value;
+			var table_name = document.getElementById("table_name").value;
+
+			if (table_name == "")
+				alert("Please enter a valid table name");
+			else if (table_name.length > 31)
+				alert("Please enter a table name that is 31 characters or less");
+			else if (num_rows == "" || isNaN(num_rows))
+				alert("Please enter a valid number of rows");
+			else
+			{
+				let url = 'http://localhost:3000/green_boi/create_csv/?keyword="'+keyword+'"&table_name="'+table_name+'"&num_rows='+num_rows;
+				console.log(url);
+				fetch(url)
+					.then(res => res.json())
+					.then(data => 
+					{
+						if (data == "" || data == "ERROR SERVER CONTACT")
+							showHideError();
+						else
+							fillTable(data, null);
+					})
+				.catch(err => showHideError());
+			}
+		}*/
+
+		function switchMode()
+		{
+			if (lightMode)
+			{
+				document.body.style.background = "#0f5000";
+				document.getElementById("mode").innerHTML = "Light Mode";
+
+				var elements = document.getElementsByClassName("content");
+			    for (var i = 0; i < elements.length; i++) 
+			    {
+			        elements[i].style.backgroundColor = "#262626";
+			        elements[i].style.color = "white";
+			    }
+
+			    var elements = document.getElementsByClassName("modal-content");
+			    for (var i = 0; i < elements.length; i++) 
+			    {
+			        elements[i].style.backgroundColor = "#262626";
+			        elements[i].style.color = "white";
+			    }
+
+			    document.getElementById("col_names").style.backgroundColor = "#0f5000";
+
+				var elements = document.getElementsByTagName("b");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("h1");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("h2");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("h3");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("p");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("pre");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				var elements = document.getElementsByTagName("li");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "white";
+				}
+
+				document.getElementById("loader").style.border = "5px solid #262626";
+				document.getElementById("loader").style.borderTop = "5px solid gray";
+
+				lightMode = false;
+			}
+			else
+			{
+				document.body.style.background = "lightgreen";
+				document.getElementById("mode").innerHTML = "Dark Mode";
+
+				var elements = document.getElementsByClassName("content");
+			    for (var i = 0; i < elements.length; i++) 
+			    {
+			        elements[i].style.backgroundColor = "white";
+			        elements[i].style.color = "black";
+			    }
+
+			    var elements = document.getElementsByClassName("modal-content");
+			    for (var i = 0; i < elements.length; i++) 
+			    {
+			        elements[i].style.backgroundColor = "white";
+			        elements[i].style.color = "black";
+			    }
+
+			    document.getElementById("col_names").style.backgroundColor = "lightgreen";
+
+			    var elements = document.getElementsByTagName("b");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("h1");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("h2");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("h3");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("p");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("pre");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				var elements = document.getElementsByTagName("li");
+				for (var i = 0; i < elements.length; i++) 
+				{
+					elements[i].style.color = "black";
+				}
+
+				document.getElementById("loader").style.border = "5px solid white";
+				document.getElementById("loader").style.borderTop = "5px solid gray";
+
+				lightMode = true;
+			}
+		}
+
+		function showHideInfo()
+		{
+			if (!info)
+			{
+				document.getElementById("info_modal").style.display = "block";
+				info = true;
+			}
+			else
+			{
+				var temp_keyword = document.getElementById("keyword").value;
+				if (temp_keyword == "")
+				{
+					if (confirm("A keyword was not specified. You will only be able to query the preloaded tables. Continue?"))
+					{
+						document.getElementById("keyword_display").innerHTML = "Keyword: (none)";
+						keyword = "(none)";
+
+						document.getElementById("info_modal").style.display = "none";
+						info = false;
+					}
+				}
+				else if (temp_keyword.length > 31)
+				{
+					alert("This keyword cannot be choosen, because it has more than 31 characters. Please input another one.");
+				}
+				else if (temp_keyword.includes(";"))
+				{
+					alert("This keyword cannot be choosen, because it contains the phrase \";\". Please input another one.");
+				}
+				else if (temp_keyword.includes("_stop"))
+				{
+					alert("This keyword cannot be choosen, because it contains the phrase \"_stop\". Please input another one.");
+				}
+				else if (temp_keyword.includes("_re_init"))
+				{
+					alert("This keyword cannot be choosen, because it contains the phrase \"_re_init\". Please input another one.");
+				}
+				else if (temp_keyword.includes("(none)"))
+				{
+					alert("This keyword cannot be choosen, because it contains the phrase \"(none)\". Please input another one.");
+				}
+				else
+				{
+					document.getElementById("keyword_display").innerHTML = "Keyword: "+temp_keyword;
+					keyword = temp_keyword;
+
+					document.getElementById("create_csv_btn").style.display = "inline";
+
+					document.getElementById("info_modal").style.display = "none";
+					info = false;
+				}
+			}
+		}
+
+		function showHideCreate()
+		{
+			if (!create)
+			{
+				document.getElementById("create_modal").style.display = "block";
+				create = true;
+			}
+			else
+			{
+				document.getElementById("create_modal").style.display = "none";
+				create = false;
+			}
+		}
+
+		function showHideError()
+		{
+			if (!error)
+			{
+				document.getElementById("error_modal").style.display = "block";
+				error = true;
+			}
+			else
+			{
+				document.getElementById("error_modal").style.display = "none";
+				error = false;
+
+				document.getElementById("result_table").style.display = "block";
+				document.getElementById("loader").style.display = "none";
+				document.getElementById("exec_btn_div").style.display = "block";
+				document.getElementById("exec_filler_div").style.display = "none";
+			}
+		}
+
+		function showHideDoc()
+		{
+			if (!doc)
+			{
+				document.getElementById("doc").style.display = "block";
+				document.getElementById("query").style.display = "none";
+				doc = true;
+			}
+			else
+			{
+				document.getElementById("query").style.display = "block";
+				document.getElementById("doc").style.display = "none";
+				doc = false;
+			}
+		}
+
+		function showHideHowItWorks()
+		{
+			if (!howWorks)
+			{
+				document.getElementById("how_it_works_modal").style.display = "block";
+				howWorks = true;
+			}
+			else
+			{
+				document.getElementById("how_it_works_modal").style.display = "none";
+				howWorks = false;
+			}
+		}
+	</script>
 
 	<head>
 		<title>Booscar</title>
@@ -14,7 +810,7 @@
 
 		<div id="query">
 			<div id="info_modal" class="non-modal" style="display: none">
-				<div class="modal-content" style="height: 50%; width: 40%; text-align: center; border-radius: 30px; background-color: white;">
+				<div class="modal-content" style="height: 450px; width: 700px; text-align: center; border-radius: 30px; background-color: white;">
 					<p>This is a database platform (pronounced BOO, as in the ghost noise, SCAR, as in battle scar) was built by <a href="https://github.com/robertsd1072/A_Database_Platform">David Roberts</a>.</p>
 					<p>The front-end was built with HTML, CSS, and Javascript. The javascript makes calls to a Node JS API, which executes a C executable on a remote server.</p>
 					<p>The motivation behind this project was to increase my understand of and experience with C. The goal of this project is to create my own version of SQL with my own ideas and my own code, and using SQL Server as a benchmark. There is more information on the github above.</p>
@@ -27,15 +823,22 @@
 			</div>
 
 			<div id="create_modal" class="non-modal" style="display: none">
-				<div class="modal-content" style="height: 60%; width: 40%; text-align: center; border-radius: 30px; background-color: white;">
+				<div class="modal-content" style="height: 510px; width: 750px; text-align: center; border-radius: 30px; background-color: white;">
 					<p>This database currently supports four datatypes: strings, integers, real numbers (including decimals), and dates (time not included).</p>
-					<p>When uploading a CSV, ensure that the first row includes both column names and datatypes. For example:</p>
+					<p>When creating from a CSV, ensure that the first row includes both column names and datatypes. For example:</p>
 					<p>COLUMN_ONE:char(63),COLUMN_TWO:integer,COLUMN_THREE:real,COLUMN_FOUR:date</p>
 					<p>In the example, char(63) means the maximum length of the string is 63 characters.</p>
-					<p>Ensure that each row is on a new line, remove any commas from string values, and ensure that any special characters are escaped. For example: "Hello this is&emsp;an ""Example""".</p>
-					<form ref='uploadForm' 
+					<p>Ensure that each row is on a new line, and remove any commas from string values.</p>
+					<h4>Please format your CSV and send it to my email <u>robertsd1072@gmail.com</u> including:</h4>
+					<ul>
+						<li>The name of the table (31 characters or less)</li>
+						<li>The number of rows to insert</li>
+						<li>Your keyword</li>
+					</ul>
+					<h4>I will upload the CSV and create the file ASAP (usually within one day).</h4>
+					<!--<form ref='uploadForm' 
 				      id='uploadForm' 
-				      action='http://localhost:3000/upload_csv/'
+				      action='http://localhost:3000/green_boi/upload_csv/'
 				      method='post'
 				      encType="multipart/form-data">
 				        <input type="file" accept=".csv" name="sampleFile"></input>
@@ -43,8 +846,69 @@
 				    </form>
 				    <input type="text" id="table_name"> <- Name of table</input><br><br>
 				    <input type="text" id="num_rows"> <- Number of rows</input>
-				    <h2><button class="my_btn_style" onclick="createTable();showHideCreate();">Create Table</button></h2>
+				    <h2><button class="my_btn_style" onclick="createTable();showHideCreate();">Create Table</button></h2>-->
 					<button class="my_btn_style" onClick='showHideCreate()'>Close</button>
+				</div>
+			</div>
+
+			<div id="how_it_works_modal" class="non-modal" style="display: none">
+				<div class="modal-content" style="height: 800px; width: 750px; text-align: center; border-radius: 30px; background-color: white;">
+					<h3>Booscar uses two main data structures to store a query's information and to execute a query:</h3>
+					<div class="outer" style="text-align: left; width:100%">
+						<div class="inner">
+							<pre>struct col_in_select_node
+{
+	void* table_ptr;
+	int table_ptr_type;
+
+	void* col_ptr;
+	int col_ptr_type;
+
+	char* new_name;
+
+	struct func_node* func_node;
+	struct math_node* math_node;
+	struct case_node* case_node;
+
+	int rows_data_type;
+	int_8 num_rows;
+	struct colDataNode** col_data_arr;
+	struct ListNodePtr* unique_values_head;
+	struct ListNodePtr* unique_values_tail;
+
+	struct ListNodePtr* join_matching_rows_head;
+	struct ListNodePtr* join_matching_rows_tail;
+};</pre>
+						</div>
+						<div class="inner">
+							<pre>struct select_node
+{
+	char* select_node_alias;
+
+	bool distinct;
+
+	int_8 columns_arr_size;
+	struct col_in_select_node** columns_arr;
+
+	struct where_clause_node* where_head;
+
+	struct join_node* join_head;
+
+	struct where_clause_node* having_head;
+
+	struct select_node* prev;
+	struct select_node* next;
+
+	struct order_by_node* order_by;
+};</pre>
+						</div>
+					</div>
+					<p>The most up-to-date definitions of these can be found in DB_HelperFunctions.h on my Github.</p>
+					<p>Each "select" statement is one <b>struct select_node</b> and each column is stored in one <b>struct col_in_select_node</b> in the select_node's <b>columns_arr</b>.</p>
+					<p>If you add temporary views, either using <b>with</b> or using <b>select * from ( select * from table ) tbl</b>, a new select_node is added in the <b>next</b> pointer.</p>
+					<p>To execute a query, the query is first parsed and then execution begins at the lowest level of select_node, i.e. when the <b>prev</b> pointer is null, and execution continues until the <b>next</b> pointer is null.</p>
+					<p>At that point, each column in the current select_node returns <b>col_data_arr</b>, along with <b>num_rows</b>.</p>
+					<button class="my_btn_style" onClick='showHideHowItWorks()'>Close</button>
 				</div>
 			</div>
 
@@ -64,28 +928,35 @@
 				</span>
 				<b style="font-size: 28px;">BOOSCAR</b>
 				<span style="float:right;">
-					<div class="inner"><button class="my_btn_style" onClick='showHideDoc()'>Documentation</button></div>
-					<div class="inner"><button class="my_btn_style" id="create_csv_btn" style="display:none" onClick='showHideCreate()'>Create from CSV</button></div>
+					<div class="inner"><button class="my_btn_style" onClick='showHideHowItWorks()'>How Booscar Works</button></div>
+					<div class="inner"><button class="my_btn_style" onClick='showHideDoc()'>How to Use Booscar</button></div>
 				</span>
 			</div>
 
 			<div class="outer" style="width: 100%">
 				<div class="inner">
-					<div class="content" id="outline_div" style="height: 86%; width: 25%; padding: 1%; resize: none; position: absolute; left: 1%; top: 9%; text-align: left;font-size: 20px;">
-						<button class="my_btn_style" onClick='getTables()'>Update Tables List</button>
-						<button class="my_btn_style" onClick='sendCommand()'>Execute Query</button>
+					<div class="content" id="outline_div" style="height: 86%; width: 30%; padding: 1%; resize: none; position: absolute; left: 1%; top: 9%; text-align: left;font-size: 20px;">
+						<div id="exec_btn_div">
+							<button class="my_btn_style" id="create_csv_btn" style="display:none" onClick='showHideCreate()'>Create from CSV</button>
+							<button class="my_btn_style" onClick='getTables()'>Update Tables List</button>
+							<button class="my_btn_style" onClick='sendCommand()'>Execute Query</button>
+						</div>
+						<div id="exec_filler_div" style="display: none;">
+							&nbsp;
+						</div>
 						<hr>
 						<ul id="tables_list" style="text-align: left;"></ul>
 					</div>
 					<div class="outer" id="query_and_results_div" style="width: 75%">
 						<div class="inner">
-							<textarea id="query_area" name="query_area" class="content" placeholder="Write a SQL query..." style="height: 50%; width: 70%; padding: 1%; resize: none; position: absolute; left: 29%; top: 9%; border: white"></textarea>
-							<div style="height: 3%; width: 68%; padding: 1%; resize: none; position: absolute; left: 29%; top: 58%">
-								<span style="float:left"><b style="font-size: 20px;" id="keyword_display"></b></span>
+							<textarea id="query_area" name="query_area" class="content" placeholder="Write a SQL query..." style="height: 50%; width: 65%; padding: 1%; resize: none; position: absolute; left: 34%; top: 9%; border: white"></textarea>
+							<div style="height: 3%; width: 63%; padding: 1%; resize: none; position: absolute; left: 34%; top: 58%">
+								<span style="float:left"><b style="font-size: 16px;" id="keyword_display"></b></span>
+								<span style="float:right"><button id="load_all_rows" class="my_btn_style" style="font-size: 13px; display: none;" onClick='getAllRows()'>Load All</button></span>
 								<span style="float:right"><div class="loader" id="loader" style="display: none;"></div></span>
-								<span style="float:right"><b style="font-size: 20px;" id="exec_time_display"></b></span>
+								<span style="float:right"><b style="font-size: 16px;" id="exec_time_display"></b></span>
 							</div>
-							<div id="div_table" class="content" style="height: 34.2%; width: 69.6%; padding: 0.2%; resize: none; position: absolute; left: 29%; top: 64%">
+							<div id="div_table" class="content" style="height: 34.65%; width: 64.6%; padding: 0.2%; resize: none; position: absolute; left: 34%; top: 63%">
 								<table id="result_table" class="content">
 									<tr id="col_names" style="background-color: lightgreen;">
 									</tr>
@@ -106,6 +977,7 @@
 					<ol role="list">
 						<li><a href="#Notable_Changes_Security"><span>Security</span></a></li>
 						<li><a href="#Notable_Changes_Query_Creation"><span>Query Creation</span></a></li>
+						<li><a href="#Notable_Changes_Dates"><span>Dates</span></a></li>
 						<li><a href="#Notable_Changes_Aggregate_Functions"><span>Aggregate Functions</span></a></li>
 					</ol>
 				</li>
@@ -144,9 +1016,9 @@
 					<p>Very basic security measures are implemented by having the user enter a keyword. This occurs upon website startup. The keyword will be used as a username, claiming any tables the user creates as theirs. There are two scenarios in using this keyword.</p>
 					<ol class="toc-list" role="list">
 						<li>The user does not provide a keyword.</li>
-						<br><p>The user is only permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is also not permitted to upload CSV files to create new tables.</p><br>
+						<br><p>The user is only permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is also not permitted to query any tables created with a CSV file.</p><br>
 						<br><li>The user does provide a keyword.</li>
-						<br><p>The user is permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is permitted to upload CSV files to create new tables. Inserts, updates, and deletes are permitted on any table the user creates.</p><br>
+						<br><p>The user is permitted to query the preloaded tables. No inserts, updates, or deletes are permitted on the preloaded tables. The user is permitted to query any tables that were created with a CSV file and their keyword. Inserts, updates, and deletes are permitted on any table the user creates.</p><br>
 					</ol>
 				</div>
 				<div id="Notable_Changes_Query_Creation">
@@ -169,6 +1041,13 @@ from
 	select * from table
 ) <u>TBL</u>;</pre>
 					</ol>
+				</div>
+				<div id="Notable_Changes_Dates">
+					<h3>Query Creation</h3>
+					<p>All dates are stored as strings the form of 'MM/DD/YYYY'. Please omit all leading zeros and specify all four digits of the year.</p>
+					<p>To compare dates, simply input the two dates (or columns) and use your comparison operator of choice, for example: DATE_COLUMN > '1/1/1900'</p>
+					<p>To do math on dates, simply input the date (or column) followed by your operator, for example: (DATE_COLUMN + 10) - ('1/1/1900' + 365)</p>
+					<p>All operands for date arithmetic must be <u>intergers</u> and will interpreted as <u>days</u>.</p>
 				</div>
 				<div id="Notable_Changes_Aggregate_Functions">
 					<h3>Aggregate Functions</h3>
